@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/guessGame/', // Add base path for GitHub Pages
+  base: './', // Use relative paths so it works on any GitHub Pages repo name
   server: {
     host: true, // Listen on all local IPs
   }
