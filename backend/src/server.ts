@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import multer from "multer";
-import db from "./db/database";
+import { supabase } from "./db/supabase";
 
 const app = express();
 app.use(cors());
@@ -31,68 +31,96 @@ app.get("/api/health", (req: express.Request, res: express.Response) => {
 });
 
 // Users: Create or get user
-app.post("/api/users", (req: express.Request, res: express.Response) => {
+app.post("/api/users", async (req: express.Request, res: express.Response) => {
   const { username } = req.body;
   if (!username) return res.status(400).json({ error: "Username required" });
 
-  const existingUser = db.prepare("SELECT * FROM users WHERE username = ?").get(username);
+  const { data: existingUser, error: selErr } = await supabase
+    .from('users')
+    .select('*')
+    .eq('username', username)
+    .single();
+
   if (existingUser) {
     return res.json(existingUser);
   }
 
-  const result = db.prepare("INSERT INTO users (username) VALUES (?)").run(username);
-  res.json({ id: result.lastInsertRowid, username, total_score: 0, games_played: 0 });
+  const { data: newUser, error: insErr } = await supabase
+    .from('users')
+    .insert([{ username }])
+    .select()
+    .single();
+
+  if (insErr) return res.status(500).json({ error: insErr.message });
+  res.json(newUser);
 });
 
 // Users: Update score
-app.post("/api/score", (req: express.Request, res: express.Response) => {
+app.post("/api/score", async (req: express.Request, res: express.Response) => {
   const { username, score } = req.body;
   if (!username || score === undefined) return res.status(400).json({ error: "Missing data" });
 
-  db.prepare("UPDATE users SET total_score = total_score + ?, games_played = games_played + 1 WHERE username = ?").run(score, username);
-  
-  const updatedUser = db.prepare("SELECT * FROM users WHERE username = ?").get(username);
+  // Get current user stats
+  const { data: user } = await supabase.from('users').select('*').eq('username', username).single();
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  // Update
+  const { data: updatedUser, error } = await supabase
+    .from('users')
+    .update({ 
+      total_score: user.total_score + score, 
+      games_played: user.games_played + 1 
+    })
+    .eq('username', username)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
   res.json(updatedUser);
 });
 
 // Leaderboard
-app.get("/api/leaderboard", (req: express.Request, res: express.Response) => {
-  const topUsers = db.prepare("SELECT username, total_score, games_played FROM users ORDER BY total_score DESC LIMIT 10").all();
-  res.json(topUsers);
+app.get("/api/leaderboard", async (req: express.Request, res: express.Response) => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('username, total_score, games_played')
+    .order('total_score', { ascending: false })
+    .limit(10);
+    
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
 // Get next image based on category and difficulty
-app.get("/api/images", (req: express.Request, res: express.Response) => {
+app.get("/api/images", async (req: express.Request, res: express.Response) => {
   const { category, difficulty } = req.query;
   
-  let query = "SELECT * FROM objects WHERE 1=1";
-  const params: any[] = [];
+  let query = supabase.from('objects').select('*');
   
   if (category && category !== 'All Categories') {
-    query += " AND category = ?";
-    params.push(category);
+    query = query.eq('category', category);
   }
   
   if (difficulty) {
-    query += " AND difficulty = ?";
-    params.push(difficulty);
+    query = query.eq('difficulty', difficulty);
   }
 
-  // Get a random image matching the criteria
-  query += " ORDER BY RANDOM() LIMIT 1";
+  // Postgres Random selection 
+  // (Alternatively, we fetch all ids and pick one in JS, avoiding slow random sorting on massive tables)
+  const { data: objects, error } = await query;
   
-  const object: any = db.prepare(query).get(...params);
-  
-  if (!object) {
+  if (error || !objects || objects.length === 0) {
     return res.status(404).json({ error: "No images found for this criteria" });
   }
 
+  const randomObject = objects[Math.floor(Math.random() * objects.length)];
+
   res.json({ 
-    imageUrl: object.imagePath.startsWith('/') ? object.imagePath : '/' + object.imagePath, 
-    category: object.category, 
-    answer: object.name,
-    info: object.info,
-    specific_areas: object.specific_areas ? JSON.parse(object.specific_areas) : null
+    imageUrl: randomObject.imagePath.startsWith('/') ? randomObject.imagePath : '/' + randomObject.imagePath, 
+    category: randomObject.category, 
+    answer: randomObject.name,
+    info: randomObject.info,
+    specific_areas: randomObject.specific_areas ? JSON.parse(randomObject.specific_areas) : null
   });
 });
 
@@ -104,7 +132,7 @@ app.post("/api/guess", (req: express.Request, res: express.Response) => {
 });
 
 // Upload new object
-app.post("/api/objects", upload.single("image"), (req: express.Request, res: express.Response) => {
+app.post("/api/objects", upload.single("image"), async (req: express.Request, res: express.Response) => {
   if (!req.file) return res.status(400).json({ error: "Image file required" });
 
   const { name, category, difficulty, info, specific_areas } = req.body;
@@ -115,18 +143,24 @@ app.post("/api/objects", upload.single("image"), (req: express.Request, res: exp
 
   const imagePath = "/uploads/" + req.file.filename;
 
-  const insert = db.prepare(`
-    INSERT INTO objects (name, imagePath, category, difficulty, info, specific_areas) 
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-  
-  const result = insert.run(name, imagePath, category, difficulty, info || null, specific_areas || null);
+  const { data, error } = await supabase
+    .from('objects')
+    .insert([{
+      name,
+      imagePath,
+      category,
+      difficulty,
+      info: info || null,
+      specific_areas: specific_areas || null
+    }])
+    .select()
+    .single();
 
-  res.json({ id: result.lastInsertRowid, name, imagePath, category });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ id: data.id, name, imagePath, category });
 });
 
 const PORT = 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
-//app.listen(3000, () => console.log("Server running on port 3000"));
