@@ -28,18 +28,20 @@ export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderbo
   };
 
   return (
-    <div className="menu max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg mt-10">
-      <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Game Setup</h2>
+    <div className="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl border border-gray-100 mt-4">
+      <h2 className="text-3xl font-extrabold text-center mb-8 text-gray-800 flex items-center justify-center gap-2">
+        <span>🎮</span> Game Setup
+      </h2>
       
-      <div className="space-y-4">
+      <div className="space-y-5">
         <div className="flex flex-col">
-          <label className="mb-2 font-semibold text-gray-700">Category</label>
+          <label className="mb-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Category</label>
           <select 
             value={selectedCategory} 
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="p-2 border border-gray-300 rounded bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all cursor-pointer"
           >
-            <option value="">All Categories</option>
+            <option value="">🌎 All Categories</option>
             {categories.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
@@ -47,51 +49,53 @@ export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderbo
         </div>
 
         <div className="flex flex-col">
-          <label className="mb-2 font-semibold text-gray-700">Difficulty</label>
+          <label className="mb-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Difficulty</label>
           <select 
             value={selectedDifficulty} 
             onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="p-2 border border-gray-300 rounded bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all cursor-pointer"
           >
             {difficulties.map((d) => (
-              <option key={d} value={d}>{d}</option>
+              <option key={d} value={d}>
+                {d === 'Easy' ? '🟢' : d === 'Medium' ? '🟡' : '🔴'} {d}
+              </option>
             ))}
           </select>
-          <p className="text-xs text-gray-500 mt-1">Difficulty affects how much of the image you see.</p>
+          <p className="text-xs text-gray-500 mt-2 font-medium">Difficulty affects how much of the image you see.</p>
         </div>
 
         <div className="flex flex-col">
-          <label className="mb-2 font-semibold text-gray-700">Rounds</label>
+          <label className="mb-2 font-bold text-gray-700 text-sm uppercase tracking-wide">Rounds</label>
           <input
             type="number"
             min={1}
             max={20}
             value={rounds}
             onChange={(e) => setRounds(parseInt(e.target.value))}
-            className="p-2 border border-gray-300 rounded bg-white text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all"
           />
         </div>
 
         <button 
           onClick={handleStart}
-          className="w-full py-3 mt-6 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200"
+          className="w-full py-4 mt-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all duration-200 text-lg flex justify-center py-4"
         >
-          Start Game
+          ▶ Play Now
         </button>
 
-        <div className="flex gap-4 mt-4">
+        <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100">
           <button 
             onClick={onNavigateUpload}
-            className="flex-1 py-2 bg-gray-200 text-gray-700 font-semibold rounded hover:bg-gray-300 transition duration-200"
+            className="py-3 bg-gray-50 text-gray-700 font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-gray-100 border border-gray-200 transition duration-200"
           >
-            Upload Image
+            <span>☁️</span> Upload
           </button>
           
           <button 
             onClick={onNavigateLeaderboard}
-            className="flex-1 py-2 bg-purple-100 text-purple-700 font-semibold rounded hover:bg-purple-200 transition duration-200"
+            className="py-3 bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-indigo-100 border border-indigo-100 transition duration-200"
           >
-            Leaderboard
+            <span>🏆</span> Rankings
           </button>
         </div>
       </div>

@@ -53,22 +53,27 @@ function App() {
 
   if (!username) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center py-10 px-4 font-sans text-gray-800">
-        <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg text-center">
-          <h1 className="text-3xl font-extrabold text-blue-600 mb-6">Welcome to Guess That Object</h1>
-          <form onSubmit={handleSetUsername} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Please enter your username to play:</label>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 font-sans text-gray-800">
+        <div className="max-w-md w-full bg-white p-10 rounded-2xl shadow-2xl text-center border border-indigo-50">
+          <div className="mb-8">
+             <span className="text-5xl mb-4 block">🔍</span>
+             <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 tracking-tight">Guess That Object</h1>
+             <p className="mt-3 text-gray-500 font-medium">How good are your eyes?</p>
+          </div>
+          
+          <form onSubmit={handleSetUsername} className="space-y-6">
+            <div className="text-left">
+              <label className="block text-sm font-bold text-gray-700 mb-2">Choose your Player Name:</label>
               <input 
                 name="username"
                 type="text" 
-                className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="AwesomePlayer99"
+                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-lg"
+                placeholder="e.g. MasterGuesser99"
                 required
               />
             </div>
-            <button type="submit" className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200">
-              Continue
+            <button type="submit" className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all duration-200 text-lg">
+              Start Playing
             </button>
           </form>
         </div>
@@ -77,63 +82,85 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10 px-4 font-sans text-gray-800">
-      <header className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8">
-        <div className="text-center md:text-left mb-4 md:mb-0">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-blue-600 tracking-tight cursor-pointer" onClick={() => { setGameStarted(false); setShowUpload(false); setShowLeaderboard(false); }}>
+    <div className="min-h-screen bg-slate-50 py-8 px-4 font-sans text-gray-800 flex flex-col items-center">
+      
+      {/* Top Banner Ad Placeholder */}
+      <div className="w-full max-w-4xl h-24 bg-gray-200 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 font-mono text-sm rounded-lg mb-8">
+        [ Advertisement Banner 728x90 ]
+      </div>
+
+      <header className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div className="text-center sm:text-left mb-4 sm:mb-0">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-blue-600 tracking-tight cursor-pointer hover:opacity-80 transition" onClick={() => { setGameStarted(false); setShowUpload(false); setShowLeaderboard(false); }}>
             Guess <span className="text-gray-800">That Object</span>
           </h1>
-          <p className="mt-2 text-gray-500">Playing as: <span className="font-bold text-gray-700">{username}</span></p>
         </div>
-        {!gameStarted && !showUpload && !showLeaderboard && (
-           <button 
-             onClick={() => { localStorage.removeItem('guessing_game_username'); setUsername(null); }}
-             className="text-sm px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded transition"
-           >
-             Change User
-           </button>
-        )}
+        
+        <div className="flex items-center gap-4">
+          <div className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full font-semibold text-sm border border-indigo-100">
+            👤 {username}
+          </div>
+          {!gameStarted && !showUpload && !showLeaderboard && (
+             <button 
+               onClick={() => { localStorage.removeItem('guessing_game_username'); setUsername(null); }}
+               className="text-sm px-4 py-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-full font-medium transition"
+             >
+               Logout
+             </button>
+          )}
+        </div>
       </header>
 
-      {!gameStarted && finalScore === null && !showUpload && !showLeaderboard && (
-        <Menu 
-          onStartGame={startGame} 
-          onNavigateUpload={() => setShowUpload(true)} 
-          onNavigateLeaderboard={() => setShowLeaderboard(true)} 
-        />
-      )}
-      
-      {showUpload && (
-        <ImageUpload onSuccess={() => setShowUpload(false)} onCancel={() => setShowUpload(false)} />
-      )}
+      <div className="w-full max-w-4xl mx-auto flex-1">
+        {!gameStarted && finalScore === null && !showUpload && !showLeaderboard && (
+          <Menu 
+            onStartGame={startGame} 
+            onNavigateUpload={() => setShowUpload(true)} 
+            onNavigateLeaderboard={() => setShowLeaderboard(true)} 
+          />
+        )}
+        
+        {showUpload && (
+          <ImageUpload onSuccess={() => setShowUpload(false)} onCancel={() => setShowUpload(false)} />
+        )}
 
-      {showLeaderboard && (
-        <Leaderboard onBack={() => setShowLeaderboard(false)} />
-      )}
-      
-      {gameStarted && (
-        <GameBoard
-          category={gameSettings.category}
-          difficulty={gameSettings.difficulty}
-          rounds={gameSettings.rounds}
-          onGameEnd={handleGameEnd}
-        />
-      )}
-      
-      {finalScore !== null && (
-        <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg mt-10 text-center">
-          <h2 className="text-3xl font-bold mb-4 text-gray-800">Game Over!</h2>
-          <div className="text-xl mb-6">
-            Your Final Score: <span className="text-3xl font-extrabold text-blue-600">{finalScore}</span> / {gameSettings.rounds}
+        {showLeaderboard && (
+          <Leaderboard onBack={() => setShowLeaderboard(false)} />
+        )}
+        
+        {gameStarted && (
+          <GameBoard
+            category={gameSettings.category}
+            difficulty={gameSettings.difficulty}
+            rounds={gameSettings.rounds}
+            onGameEnd={handleGameEnd}
+          />
+        )}
+        
+        {finalScore !== null && (
+          <div className="max-w-md mx-auto bg-white p-10 rounded-2xl shadow-xl mt-10 text-center border border-gray-100">
+             <div className="text-6xl mb-4">🏆</div>
+            <h2 className="text-3xl font-bold mb-2 text-gray-800">Game Over!</h2>
+            <p className="text-gray-500 mb-6">Great job, {username}!</p>
+            
+            <div className="text-2xl mb-8 p-6 bg-blue-50 rounded-xl border border-blue-100">
+              Score: <span className="text-5xl font-extrabold text-blue-600 block mt-2">{finalScore} <span className="text-2xl text-blue-400">/ {gameSettings.rounds}</span></span>
+            </div>
+            <button 
+              onClick={() => setFinalScore(null)}
+              className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all duration-200 text-lg block"
+            >
+              Play Again
+            </button>
           </div>
-          <button 
-            onClick={() => setFinalScore(null)}
-            className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200"
-          >
-            Play Again
-          </button>
-        </div>
-      )}
+        )}
+      </div>
+
+       {/* Bottom Ad Placeholder */}
+       <div className="w-full max-w-4xl h-64 bg-gray-200 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 font-mono text-sm rounded-lg mt-12 mb-4">
+        [ Advertisement Square 300x250 ]
+      </div>
+
     </div>
   );
 }
