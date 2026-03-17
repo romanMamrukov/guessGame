@@ -1,7 +1,7 @@
-import * as express from "express";
-import * as cors from "cors";
+import express from "express";
+import cors from "cors";
 import path from "path";
-import * as multer from "multer";
+import multer from "multer";
 import db from "./db/database";
 
 const app = express();
@@ -14,11 +14,11 @@ app.use("/assets", express.static(path.join(__dirname, "../../assets")));
 
 // Configure multer for image uploads
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (req: express.Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
     // Assuming you have an 'uploads' directory at the project root
     cb(null, path.join(__dirname, "../../uploads"));
   },
-  filename: (req, file, cb) => {
+  filename: (req: express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
   }
@@ -26,12 +26,12 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Health check
-app.get("/api/health", (req, res) => {
+app.get("/api/health", (req: express.Request, res: express.Response) => {
   res.json({ status: "API running" });
 });
 
 // Users: Create or get user
-app.post("/api/users", (req, res) => {
+app.post("/api/users", (req: express.Request, res: express.Response) => {
   const { username } = req.body;
   if (!username) return res.status(400).json({ error: "Username required" });
 
@@ -45,7 +45,7 @@ app.post("/api/users", (req, res) => {
 });
 
 // Users: Update score
-app.post("/api/score", (req, res) => {
+app.post("/api/score", (req: express.Request, res: express.Response) => {
   const { username, score } = req.body;
   if (!username || score === undefined) return res.status(400).json({ error: "Missing data" });
 
@@ -56,13 +56,13 @@ app.post("/api/score", (req, res) => {
 });
 
 // Leaderboard
-app.get("/api/leaderboard", (req, res) => {
+app.get("/api/leaderboard", (req: express.Request, res: express.Response) => {
   const topUsers = db.prepare("SELECT username, total_score, games_played FROM users ORDER BY total_score DESC LIMIT 10").all();
   res.json(topUsers);
 });
 
 // Get next image based on category and difficulty
-app.get("/api/images", (req, res) => {
+app.get("/api/images", (req: express.Request, res: express.Response) => {
   const { category, difficulty } = req.query;
   
   let query = "SELECT * FROM objects WHERE 1=1";
@@ -97,14 +97,14 @@ app.get("/api/images", (req, res) => {
 });
 
 // Submit guess
-app.post("/api/guess", (req, res) => {
+app.post("/api/guess", (req: express.Request, res: express.Response) => {
   const { guess, correctAnswer } = req.body;
   const correct = guess.toLowerCase() === correctAnswer.toLowerCase();
   res.json({ correct });
 });
 
 // Upload new object
-app.post("/api/objects", upload.single("image"), (req, res) => {
+app.post("/api/objects", upload.single("image"), (req: express.Request, res: express.Response) => {
   if (!req.file) return res.status(400).json({ error: "Image file required" });
 
   const { name, category, difficulty, info, specific_areas } = req.body;
