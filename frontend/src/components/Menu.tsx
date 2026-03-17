@@ -3,9 +3,11 @@ import { fetchCategories, fetchDifficulties } from '../services/api';
 
 interface MenuProps {
   onStartGame: (category: string, difficulty: string, rounds: number) => void;
+  onNavigateUpload: () => void;
+  onNavigateLeaderboard: () => void;
 }
 
-export default function Menu({ onStartGame }: MenuProps) {
+export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderboard }: MenuProps) {
   const [categories, setCategories] = useState<string[]>([]);
   const [difficulties, setDifficulties] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -76,6 +78,22 @@ export default function Menu({ onStartGame }: MenuProps) {
         >
           Start Game
         </button>
+
+        <div className="flex gap-4 mt-4">
+          <button 
+            onClick={onNavigateUpload}
+            className="flex-1 py-2 bg-gray-200 text-gray-700 font-semibold rounded hover:bg-gray-300 transition duration-200"
+          >
+            Upload Image
+          </button>
+          
+          <button 
+            onClick={onNavigateLeaderboard}
+            className="flex-1 py-2 bg-purple-100 text-purple-700 font-semibold rounded hover:bg-purple-200 transition duration-200"
+          >
+            Leaderboard
+          </button>
+        </div>
       </div>
     </div>
   );
