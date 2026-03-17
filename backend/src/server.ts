@@ -121,7 +121,7 @@ app.get("/api/images", async (req: Request, res: Response): Promise<any> => {
     const imgPath = randomObject.imagePath || '';
     const imageUrl = imgPath.startsWith('http') 
       ? imgPath 
-      : (imgPath.startsWith('/') ? imgPath : '/' + imgPath);
+      : (imgPath.startsWith('/') ? imgPath.slice(1) : imgPath);
 
     let specific_areas = null;
     try {

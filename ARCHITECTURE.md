@@ -54,6 +54,10 @@ The project leverages modern free-tier cloud platforms to host the different par
 - **Database:** Stores the `users` (usernames, scores) and `objects` (image URLs, answers, categories, difficulties) tables.
 - **Storage Buckets:** Contains a public bucket named `images`. When a user uploads a file through the frontend, it goes to the backend, which streams it directly into this Supabase Bucket and returns a persistent public URL.
 
+### D. Static Image Processing
+- **Pre-installed Images:** Starter images (like `apple.png`) are located in the `frontend/public/assets/images` directory. When Vite builds the project, these assets are bundled into the GitHub Pages deployment. The Supabase database stores their relative paths (e.g. `assets/images/apple.png`), ensuring they resolve correctly on the `/guessGame/` sub-domain.
+- **User Uploads:** User-submitted images are hosted fully externally via the Supabase Storage Bucket and their full absolute URLs (`https://...`) are saved to the database.
+
 ---
 
 ## 4. Development & Running Locally
