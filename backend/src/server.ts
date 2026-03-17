@@ -36,13 +36,20 @@ app.post("/api/users", async (req: Request, res: Response): Promise<any> => {
     return res.json(existingUser);
   }
 
+  if (selErr && selErr.code !== 'PGRST116') {
+    console.error("Error finding user:", selErr);
+  }
+
   const { data: newUser, error: insErr } = await supabase
     .from('users')
     .insert([{ username }])
     .select()
     .single();
 
-  if (insErr) return res.status(500).json({ error: insErr.message });
+  if (insErr) {
+    console.error("Error creating user:", insErr);
+    return res.status(500).json({ error: insErr.message });
+  }
   return res.json(newUser);
 });
 
