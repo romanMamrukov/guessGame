@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import path from "path";
 import multer from "multer";
@@ -12,26 +12,17 @@ app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "../../uploads")));
 app.use("/assets", express.static(path.join(__dirname, "../../assets")));
 
-// Configure multer for image uploads
-const storage = multer.diskStorage({
-  destination: (req: express.Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-    // Assuming you have an 'uploads' directory at the project root
-    cb(null, path.join(__dirname, "../../uploads"));
-  },
-  filename: (req: express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for image uploads (Memory Storage for Supabase)
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Health check
-app.get("/api/health", (req: express.Request, res: express.Response) => {
+app.get("/api/health", (req: Request, res: Response) => {
   res.json({ status: "API running" });
 });
 
 // Users: Create or get user
-app.post("/api/users", async (req: express.Request, res: express.Response) => {
+app.post("/api/users", async (req: Request, res: Response): Promise<any> => {
   const { username } = req.body;
   if (!username) return res.status(400).json({ error: "Username required" });
 
@@ -52,11 +43,11 @@ app.post("/api/users", async (req: express.Request, res: express.Response) => {
     .single();
 
   if (insErr) return res.status(500).json({ error: insErr.message });
-  res.json(newUser);
+  return res.json(newUser);
 });
 
 // Users: Update score
-app.post("/api/score", async (req: express.Request, res: express.Response) => {
+app.post("/api/score", async (req: Request, res: Response): Promise<any> => {
   const { username, score } = req.body;
   if (!username || score === undefined) return res.status(400).json({ error: "Missing data" });
 
@@ -76,11 +67,11 @@ app.post("/api/score", async (req: express.Request, res: express.Response) => {
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json(updatedUser);
+  return res.json(updatedUser);
 });
 
 // Leaderboard
-app.get("/api/leaderboard", async (req: express.Request, res: express.Response) => {
+app.get("/api/leaderboard", async (req: Request, res: Response): Promise<any> => {
   const { data, error } = await supabase
     .from('users')
     .select('username, total_score, games_played')
@@ -88,25 +79,24 @@ app.get("/api/leaderboard", async (req: express.Request, res: express.Response) 
     .limit(10);
     
   if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+  return res.json(data);
 });
 
 // Get next image based on category and difficulty
-app.get("/api/images", async (req: express.Request, res: express.Response) => {
+app.get("/api/images", async (req: Request, res: Response): Promise<any> => {
   const { category, difficulty } = req.query;
   
   let query = supabase.from('objects').select('*');
   
   if (category && category !== 'All Categories') {
-    query = query.eq('category', category);
+    query = query.eq('category', category as string);
   }
   
   if (difficulty) {
-    query = query.eq('difficulty', difficulty);
+    query = query.eq('difficulty', difficulty as string);
   }
 
   // Postgres Random selection 
-  // (Alternatively, we fetch all ids and pick one in JS, avoiding slow random sorting on massive tables)
   const { data: objects, error } = await query;
   
   if (error || !objects || objects.length === 0) {
@@ -115,8 +105,13 @@ app.get("/api/images", async (req: express.Request, res: express.Response) => {
 
   const randomObject = objects[Math.floor(Math.random() * objects.length)];
 
-  res.json({ 
-    imageUrl: randomObject.imagePath.startsWith('/') ? randomObject.imagePath : '/' + randomObject.imagePath, 
+  // For backward compatibility, if it's a local route, prepend /
+  const imageUrl = randomObject.imagePath.startsWith('http') 
+    ? randomObject.imagePath 
+    : (randomObject.imagePath.startsWith('/') ? randomObject.imagePath : '/' + randomObject.imagePath);
+
+  return res.json({ 
+    imageUrl: imageUrl, 
     category: randomObject.category, 
     answer: randomObject.name,
     info: randomObject.info,
@@ -125,15 +120,16 @@ app.get("/api/images", async (req: express.Request, res: express.Response) => {
 });
 
 // Submit guess
-app.post("/api/guess", (req: express.Request, res: express.Response) => {
+app.post("/api/guess", (req: Request, res: Response) => {
   const { guess, correctAnswer } = req.body;
   const correct = guess.toLowerCase() === correctAnswer.toLowerCase();
   res.json({ correct });
 });
 
-// Upload new object
-app.post("/api/objects", upload.single("image"), async (req: express.Request, res: express.Response) => {
-  if (!req.file) return res.status(400).json({ error: "Image file required" });
+// Upload new object to Supabase Storage Bucket
+app.post("/api/objects", upload.single("image"), async (req: express.Request, res: express.Response): Promise<any> => {
+  const file = req.file;
+  if (!file) return res.status(400).json({ error: "Image file required" });
 
   const { name, category, difficulty, info, specific_areas } = req.body;
   
@@ -141,8 +137,27 @@ app.post("/api/objects", upload.single("image"), async (req: express.Request, re
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const imagePath = "/uploads/" + req.file.filename;
+  const uniqueFilename = `${Date.now()}-${name.replace(/[^a-zA-Z0-9]/g, '')}${path.extname(file.originalname)}`;
+  
+  // 1. Upload the image directly to Supabase Bucket 'images'
+  const { data: storageData, error: storageError } = await supabase.storage
+    .from('images')
+    .upload(uniqueFilename, file.buffer, {
+      contentType: file.mimetype
+    });
 
+  if (storageError) {
+    return res.status(500).json({ error: "Failed to upload image to storage: " + storageError.message });
+  }
+
+  // 2. Get the public URL for the newly uploaded image
+  const { data: publicUrlData } = supabase.storage
+    .from('images')
+    .getPublicUrl(uniqueFilename);
+
+  const imagePath = publicUrlData.publicUrl;
+
+  // 3. Save reference in Postgres 'objects' table
   const { data, error } = await supabase
     .from('objects')
     .insert([{
@@ -157,7 +172,7 @@ app.post("/api/objects", upload.single("image"), async (req: express.Request, re
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
-  res.json({ id: data.id, name, imagePath, category });
+  return res.json({ id: data.id, name, imagePath, category });
 });
 
 const PORT = 3000;
