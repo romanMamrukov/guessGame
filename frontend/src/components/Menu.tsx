@@ -30,7 +30,7 @@ export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderbo
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-xl border border-gray-100 mt-4">
       <h2 className="text-3xl font-extrabold text-center mb-8 text-gray-800 flex items-center justify-center gap-2">
-        <span>🎮</span> Game Setup
+        Game Setup
       </h2>
       
       <div className="space-y-5">
@@ -39,9 +39,9 @@ export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderbo
           <select 
             value={selectedCategory} 
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all cursor-pointer"
+            className="p-3 border border-gray-200 rounded-xl bg-white text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all cursor-pointer"
           >
-            <option value="">🌎 All Categories</option>
+            <option value="">All Categories</option>
             {categories.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
@@ -53,11 +53,11 @@ export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderbo
           <select 
             value={selectedDifficulty} 
             onChange={(e) => setSelectedDifficulty(e.target.value)}
-            className="p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all cursor-pointer"
+            className="p-3 border border-gray-200 rounded-xl bg-white text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all cursor-pointer"
           >
             {difficulties.map((d) => (
               <option key={d} value={d}>
-                {d === 'Easy' ? '🟢' : d === 'Medium' ? '🟡' : '🔴'} {d}
+                {d}
               </option>
             ))}
           </select>
@@ -72,15 +72,15 @@ export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderbo
             max={20}
             value={rounds}
             onChange={(e) => setRounds(parseInt(e.target.value))}
-            className="p-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-800 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all"
+            className="p-3 border border-gray-200 rounded-xl bg-white text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all"
           />
         </div>
 
         <button 
           onClick={handleStart}
-          className="w-full py-4 mt-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all duration-200 text-lg flex justify-center py-4"
+          className="w-full py-4 mt-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all duration-200 text-lg flex justify-center"
         >
-          ▶ Play Now
+          Play Now
         </button>
 
         <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100">
@@ -88,14 +88,14 @@ export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderbo
             onClick={onNavigateUpload}
             className="py-3 bg-gray-50 text-gray-700 font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-gray-100 border border-gray-200 transition duration-200"
           >
-            <span>☁️</span> Upload
+            Upload
           </button>
           
           <button 
             onClick={onNavigateLeaderboard}
             className="py-3 bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-indigo-100 border border-indigo-100 transition duration-200"
           >
-            <span>🏆</span> Rankings
+            Rankings
           </button>
         </div>
       </div>

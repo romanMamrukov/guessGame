@@ -91,39 +91,58 @@ app.get("/api/leaderboard", async (req: Request, res: Response): Promise<any> =>
 
 // Get next image based on category and difficulty
 app.get("/api/images", async (req: Request, res: Response): Promise<any> => {
-  const { category, difficulty } = req.query;
-  
-  let query = supabase.from('objects').select('*');
-  
-  if (category && category !== 'All Categories') {
-    query = query.eq('category', category as string);
+  try {
+    const { category, difficulty } = req.query;
+    
+    let query = supabase.from('objects').select('*');
+    
+    if (category && category !== 'All Categories') {
+      query = query.eq('category', category as string);
+    }
+    
+    if (difficulty) {
+      query = query.eq('difficulty', difficulty as string);
+    }
+
+    // Postgres Random selection 
+    const { data: objects, error } = await query;
+    
+    if (error) {
+      console.error("Database error fetching images:", error);
+      return res.status(500).json({ error: error.message });
+    }
+
+    if (!objects || objects.length === 0) {
+      return res.status(404).json({ error: "No images found for this criteria" });
+    }
+
+    const randomObject = objects[Math.floor(Math.random() * objects.length)];
+
+    const imgPath = randomObject.imagePath || '';
+    const imageUrl = imgPath.startsWith('http') 
+      ? imgPath 
+      : (imgPath.startsWith('/') ? imgPath : '/' + imgPath);
+
+    let specific_areas = null;
+    try {
+      if (randomObject.specific_areas) {
+        specific_areas = JSON.parse(randomObject.specific_areas);
+      }
+    } catch (e) {
+      console.warn("Invalid JSON in specific_areas for object:", randomObject.id);
+    }
+
+    return res.json({ 
+      imageUrl: imageUrl, 
+      category: randomObject.category, 
+      answer: randomObject.name,
+      info: randomObject.info,
+      specific_areas
+    });
+  } catch (err: any) {
+    console.error("Critical error in /api/images:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
-  
-  if (difficulty) {
-    query = query.eq('difficulty', difficulty as string);
-  }
-
-  // Postgres Random selection 
-  const { data: objects, error } = await query;
-  
-  if (error || !objects || objects.length === 0) {
-    return res.status(404).json({ error: "No images found for this criteria" });
-  }
-
-  const randomObject = objects[Math.floor(Math.random() * objects.length)];
-
-  // For backward compatibility, if it's a local route, prepend /
-  const imageUrl = randomObject.imagePath.startsWith('http') 
-    ? randomObject.imagePath 
-    : (randomObject.imagePath.startsWith('/') ? randomObject.imagePath : '/' + randomObject.imagePath);
-
-  return res.json({ 
-    imageUrl: imageUrl, 
-    category: randomObject.category, 
-    answer: randomObject.name,
-    info: randomObject.info,
-    specific_areas: randomObject.specific_areas ? JSON.parse(randomObject.specific_areas) : null
-  });
 });
 
 // Submit guess

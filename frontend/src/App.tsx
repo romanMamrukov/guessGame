@@ -67,7 +67,7 @@ function App() {
               <input 
                 name="username"
                 type="text" 
-                className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-lg"
+                className="w-full p-4 bg-white text-gray-900 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-lg"
                 placeholder="e.g. MasterGuesser99"
                 required
               />
