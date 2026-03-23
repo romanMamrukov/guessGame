@@ -42,6 +42,7 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
       formData.append('category', category);
       formData.append('difficulty', difficulty);
       formData.append('info', info);
+      formData.append('specific_areas', '');
       formData.append('image', imageFile);
 
       await uploadObject(formData);

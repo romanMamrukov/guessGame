@@ -13,39 +13,67 @@ interface GameBoardProps {
 
 export default function GameBoard({ category, difficulty = 'Medium', rounds = 5, onGameEnd }: GameBoardProps) {
   const [image, setImage] = useState<{ imageUrl: string; answer: string } | null>(null);
+  const [nextImageCache, setNextImageCache] = useState<{ imageUrl: string; answer: string } | null>(null);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
   const [isGuessing, setIsGuessing] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchAndPreload = async () => {
+    const data = await fetchNextImage(category, difficulty);
+    const img = new Image();
+    img.src = data.imageUrl;
+    return data;
+  };
+
   useEffect(() => {
-    loadNextImage();
+    const initGame = async () => {
+      setLoading(true);
+      const firstImg = await fetchAndPreload();
+      setImage(firstImg);
+      setRound(1);
+      setLoading(false);
+      
+      const secondImg = await fetchAndPreload();
+      setNextImageCache(secondImg);
+    };
+    initGame();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadNextImage = async () => {
+  const advanceRound = async (currentScore: number) => {
     if (round >= rounds) {
-      if (onGameEnd) onGameEnd(score);
+      if (onGameEnd) onGameEnd(currentScore);
       return;
     }
-    setLoading(true);
-    const data = await fetchNextImage(category, difficulty);
-    setImage(data);
+    
+    setImage(nextImageCache);
     setIsGuessing(true);
     setFeedback(null);
-    setRound(prev => prev + 1);
-    setLoading(false);
+    const newRound = round + 1;
+    setRound(newRound);
+    
+    if (newRound <= rounds) {
+      const nextOne = await fetchAndPreload();
+      setNextImageCache(nextOne);
+    }
+  };
+
+  const skipImage = () => {
+    advanceRound(score);
   };
 
   const handleGuess = async (guess: string) => {
     if (!image) return;
     const result = await submitGuess(guess, image.answer);
+    const newScore = result.correct ? score + 1 : score;
+    
     if (result.correct) {
-      setScore(prev => prev + 1);
+      setScore(newScore);
       setFeedback('Correct!');
       setIsGuessing(false);
-      setTimeout(loadNextImage, 1500); // Wait a bit before moving on
+      setTimeout(() => advanceRound(newScore), 1500); 
     } else {
       setFeedback('Incorrect, try again! Or skip.');
     }
@@ -72,7 +100,7 @@ export default function GameBoard({ category, difficulty = 'Medium', rounds = 5,
       
       {isGuessing && (
         <button 
-          onClick={loadNextImage}
+          onClick={skipImage}
           className="mt-4 px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-100 transition-colors"
         >
           Skip this image

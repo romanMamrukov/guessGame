@@ -165,6 +165,42 @@ app.post("/api/objects", upload.single("image"), async (req: express.Request, re
 
   const uniqueFilename = `${Date.now()}-${name.replace(/[^a-zA-Z0-9]/g, '')}${path.extname(file.originalname)}`;
   
+  // 0. AI Moderation Check (Content Filtering && Accurate Naming)
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (apiKey) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const payload = {
+        contents: [{
+          parts: [
+            { inlineData: { mimeType: file.mimetype, data: file.buffer.toString('base64') } },
+            { text: `Analyze this image carefully. 1. Is it explicit, NSFW, or harmful? 2. Is the main subject accurately described by the name '${name}'? Respond strictly in JSON format exactly like this: {"explicit": boolean, "accurateName": boolean, "reason": "string"}` }
+          ]
+        }],
+        generationConfig: { responseMimeType: "application/json" }
+      };
+      
+      const aiRes = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (!aiRes.ok) throw new Error("Gemini API error: " + aiRes.status);
+      
+      const aiData = await aiRes.json();
+      const text = aiData.candidates[0].content.parts[0].text;
+      const result = JSON.parse(text);
+      
+      if (result.explicit) {
+        return res.status(400).json({ error: "Upload rejected: Image contains explicit or harmful content." });
+      }
+      if (!result.accurateName) {
+        return res.status(400).json({ error: `Upload rejected: Image does not match the name '${name}'. AI says: ${result.reason}` });
+      }
+    } catch (err: any) {
+      console.error("Moderation error:", err.message);
+      return res.status(500).json({ error: "AI Moderation failed. Please try again." });
+    }
+  } else {
+    console.warn("GEMINI_API_KEY not set - skipping AI validation phase.");
+  }
+
   // 1. Upload the image directly to Supabase Bucket 'images'
   const { data: storageData, error: storageError } = await supabase.storage
     .from('images')

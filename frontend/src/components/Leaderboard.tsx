@@ -31,7 +31,11 @@ export default function Leaderboard({ onBack }: { onBack: () => void }) {
       </div>
 
       {loading ? (
-        <div className="text-center py-10 text-gray-500">Loading top players...</div>
+        <div className="space-y-4 py-4 px-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse w-full"></div>
+          ))}
+        </div>
       ) : error ? (
         <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm text-center">
           {error}
