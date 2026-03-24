@@ -88,10 +88,12 @@ export default function GameBoard({ category, difficulty = 'Medium', rounds = 5,
         <ScoreBoard score={score} />
       </div>
 
-      <ImageDisplay imageUrl={image.imageUrl} difficulty={difficulty} />
+      <div className={`transition-transform duration-500 ease-out ${!isGuessing ? 'scale-105' : 'scale-100'}`}>
+        <ImageDisplay imageUrl={image.imageUrl} difficulty={difficulty} />
+      </div>
       
       {feedback && (
-        <div className={`mb-4 text-xl font-bold ${feedback === 'Correct!' ? 'text-green-500' : 'text-red-500'}`}>
+        <div className={`mb-4 mt-2 p-3 text-xl font-bold text-center rounded-xl w-full shadow-sm ${feedback === 'Correct!' ? 'bg-green-100 text-green-700 animate-bounce' : 'bg-red-100 text-red-700 animate-pulse'}`}>
           {feedback}
         </div>
       )}

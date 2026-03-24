@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { uploadObject } from '../services/api';
+import { uploadObject, fetchCategories } from '../services/api';
 
 interface ImageUploadProps {
   onSuccess: () => void;
@@ -16,6 +16,11 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    fetchCategories().then(setAvailableCategories).catch(console.error);
+  }, []);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -92,12 +97,16 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
             <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
             <input 
               type="text" 
+              list="category-options"
               value={category} 
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
               placeholder="e.g., Animals"
               required
             />
+            <datalist id="category-options">
+              {availableCategories.map(cat => <option key={cat} value={cat} />)}
+            </datalist>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>

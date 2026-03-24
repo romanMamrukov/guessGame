@@ -82,7 +82,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 font-sans text-gray-800 flex flex-col items-center">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50/50 py-8 px-4 font-sans text-gray-800 flex flex-col items-center">
       
       {/* Top Banner Ad Placeholder */}
       <div className="w-full max-w-4xl h-24 bg-gray-200 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 font-mono text-sm rounded-lg mb-8">
@@ -143,15 +143,28 @@ function App() {
             <h2 className="text-3xl font-bold mb-2 text-gray-800">Game Over!</h2>
             <p className="text-gray-500 mb-6">Great job, {username}!</p>
             
-            <div className="text-2xl mb-8 p-6 bg-blue-50 rounded-xl border border-blue-100">
+            <div className="text-2xl mb-8 p-6 bg-blue-50 rounded-xl border border-blue-100 shadow-inner">
               Score: <span className="text-5xl font-extrabold text-blue-600 block mt-2">{finalScore} <span className="text-2xl text-blue-400">/ {gameSettings.rounds}</span></span>
             </div>
-            <button 
-              onClick={() => setFinalScore(null)}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all duration-200 text-lg block"
-            >
-              Play Again
-            </button>
+            
+            <div className="flex flex-col sm:flex-row gap-4 mt-6">
+              <button 
+                onClick={async () => {
+                  const text = `I just scored ${finalScore} / ${gameSettings.rounds} in Guess That Object. Can you beat my score?`;
+                  if (navigator.share) await navigator.share({ title: 'Guess That Object', text, url: window.location.href });
+                  else { await navigator.clipboard.writeText(text); alert('Score copied to clipboard!'); }
+                }}
+                className="flex-1 py-4 bg-blue-100 text-blue-700 font-bold rounded-xl shadow-sm hover:bg-blue-200 hover:-translate-y-0.5 transition-all duration-200 text-lg flex justify-center items-center gap-2"
+              >
+                Share Score 📤
+              </button>
+              <button 
+                onClick={() => setFinalScore(null)}
+                className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all duration-200 text-lg flex justify-center items-center gap-2"
+              >
+                Play Again 🔄
+              </button>
+            </div>
           </div>
         )}
       </div>
