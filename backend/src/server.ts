@@ -224,7 +224,7 @@ app.post("/api/objects", upload.single("image"), async (req: express.Request, re
     .from('objects')
     .insert([{
       name,
-      imagePath,
+      imagepath: imagePath,
       category,
       difficulty,
       info: info || null,

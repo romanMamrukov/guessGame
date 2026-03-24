@@ -18,9 +18,6 @@ export async function fetchNextImage(category?: string, difficulty?: string) {
   const res = await fetch(url);
   if (!res.ok) throw new Error('Failed to fetch image');
   const data = await res.json();
-  if (data.imageUrl && !data.imageUrl.startsWith('http') && !data.imageUrl.startsWith('/')) {
-    data.imageUrl = '/' + data.imageUrl;
-  }
   return data;
 }
 
