@@ -31,7 +31,9 @@ export async function submitGuess(guess: string, correctAnswer: string) {
 }
 
 export async function fetchCategories() {
-  return ['Animals', 'Vehicles', 'Fruits']; // Simplified for MVP
+  const res = await fetch(`${API_BASE}/categories`);
+  if (!res.ok) throw new Error('Failed to fetch categories');
+  return res.json();
 }
 
 export async function fetchDifficulties() {

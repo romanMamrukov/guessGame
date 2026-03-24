@@ -89,6 +89,17 @@ app.get("/api/leaderboard", async (req: Request, res: Response): Promise<any> =>
   return res.json(data);
 });
 
+// Get dynamic categories list
+app.get("/api/categories", async (req: Request, res: Response): Promise<any> => {
+  const { data, error } = await supabase.from('objects').select('category');
+  if (error) return res.status(500).json({ error: error.message });
+  
+  const categories = Array.from(new Set(data.map((item: any) => item.category)));
+  if (categories.length === 0) categories.push('Animals', 'Vehicles', 'Fruits');
+  
+  return res.json(categories);
+});
+
 // Get next image based on category and difficulty
 app.get("/api/images", async (req: Request, res: Response): Promise<any> => {
   try {
