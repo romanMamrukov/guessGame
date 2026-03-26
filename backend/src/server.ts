@@ -130,9 +130,12 @@ app.get("/api/images", async (req: Request, res: Response): Promise<any> => {
     const randomObject = objects[Math.floor(Math.random() * objects.length)];
 
     const imgPath = randomObject.imagepath || randomObject.imagePath || '';
+    const urlPrefix = process.env.NODE_ENV === 'production' 
+      ? 'https://guessgame-x7zs.onrender.com' 
+      : 'http://localhost:3000';
     const imageUrl = imgPath.startsWith('http') 
       ? imgPath 
-      : (imgPath.startsWith('/') ? imgPath.slice(1) : imgPath);
+      : `${urlPrefix}/${imgPath.startsWith('/') ? imgPath.slice(1) : imgPath}`;
 
     let specific_areas = null;
     try {

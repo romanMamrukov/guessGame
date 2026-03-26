@@ -86,7 +86,7 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
             type="text" 
             value={name} 
             onChange={(e) => setName(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            className="w-full p-2 bg-white text-gray-900 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             placeholder="e.g., Golden Retriever"
             required
           />
@@ -100,7 +100,7 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
               list="category-options"
               value={category} 
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full p-2 bg-white text-gray-900 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
               placeholder="e.g., Animals"
               required
             />
@@ -113,7 +113,7 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
             <select 
               value={difficulty} 
               onChange={(e) => setDifficulty(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full p-2 bg-white text-gray-900 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option value="Easy">Easy</option>
               <option value="Medium">Medium</option>
@@ -127,7 +127,7 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
           <textarea 
             value={info} 
             onChange={(e) => setInfo(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full p-2 bg-white text-gray-900 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
             rows={3}
             placeholder="e.g., Golden Retrievers are known for their intelligence..."
           />
