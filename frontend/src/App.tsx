@@ -3,17 +3,20 @@ import Menu from './components/Menu';
 import GameBoard from './components/GameBoard';
 import ImageUpload from './components/ImageUpload';
 import Leaderboard from './components/Leaderboard';
-import { updateScore, registerUser } from './services/api';
+import MyStats from './components/MyStats';
+import { updateScore, registerUser, pingServer } from './services/api';
 
 function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [gameSettings, setGameSettings] = useState({ category: '', difficulty: '', rounds: 5 });
   const [finalScore, setFinalScore] = useState<number | null>(null);
   const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
+    pingServer();
     const savedName = localStorage.getItem('guessing_game_username');
     if (savedName) setUsername(savedName);
   }, []);
@@ -91,7 +94,7 @@ function App() {
 
       <header className="w-full max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="text-center sm:text-left mb-4 sm:mb-0">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-blue-600 tracking-tight cursor-pointer hover:opacity-80 transition" onClick={() => { setGameStarted(false); setShowUpload(false); setShowLeaderboard(false); }}>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-blue-600 tracking-tight cursor-pointer hover:opacity-80 transition" onClick={() => { setGameStarted(false); setShowUpload(false); setShowLeaderboard(false); setShowStats(false); }}>
             Guess <span className="text-gray-800">That Object</span>
           </h1>
         </div>
@@ -111,12 +114,13 @@ function App() {
         </div>
       </header>
 
-      <div className="w-full max-w-4xl mx-auto flex-1">
-        {!gameStarted && finalScore === null && !showUpload && !showLeaderboard && (
+      <div className="w-full max-w-4xl mx-auto flex-1 px-0 md:px-16 lg:px-32">
+        {!gameStarted && finalScore === null && !showUpload && !showLeaderboard && !showStats && (
           <Menu 
             onStartGame={startGame} 
             onNavigateUpload={() => setShowUpload(true)} 
             onNavigateLeaderboard={() => setShowLeaderboard(true)} 
+            onNavigateStats={() => setShowStats(true)} 
           />
         )}
         
@@ -126,6 +130,10 @@ function App() {
 
         {showLeaderboard && (
           <Leaderboard onBack={() => setShowLeaderboard(false)} />
+        )}
+
+        {showStats && (
+          <MyStats username={username} onBack={() => setShowStats(false)} />
         )}
         
         {gameStarted && (

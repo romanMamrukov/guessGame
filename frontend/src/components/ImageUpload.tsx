@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { uploadObject, fetchCategories } from '../services/api';
 
 interface ImageUploadProps {
@@ -17,8 +17,15 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
   const [success, setSuccess] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  
+  // Masking state
+  const [masks, setMasks] = useState<{ x: number, y: number, w: number, h: number }[]>([]);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [currentBox, setCurrentBox] = useState<{ x: number, y: number, w: number, h: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchCategories().then(setAvailableCategories).catch(console.error);
   }, []);
 
@@ -27,8 +34,48 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
       const file = e.target.files[0];
       setImageFile(file);
       setPreview(URL.createObjectURL(file));
+      setMasks([]);
       setError('');
     }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    setIsDrawing(true);
+    setStartPos({ x, y });
+    setCurrentBox(null);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawing || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    
+    const curX = Math.max(0, Math.min(x, 100));
+    const curY = Math.max(0, Math.min(y, 100));
+
+    setCurrentBox({
+      x: Math.min(startPos.x, curX),
+      y: Math.min(startPos.y, curY),
+      w: Math.abs(curX - startPos.x),
+      h: Math.abs(curY - startPos.y)
+    });
+  };
+
+  const handleMouseUp = () => {
+    if (isDrawing && currentBox && currentBox.w > 1 && currentBox.h > 1) {
+      setMasks([...masks, currentBox]);
+    }
+    setIsDrawing(false);
+    setCurrentBox(null);
   };
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -47,7 +94,8 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
       formData.append('category', category);
       formData.append('difficulty', difficulty);
       formData.append('info', info);
-      formData.append('specific_areas', '');
+      formData.append('specific_areas', JSON.stringify(masks));
+      formData.append('uploader', localStorage.getItem('guessing_game_username') || '');
       formData.append('image', imageFile);
 
       await uploadObject(formData);
@@ -146,19 +194,51 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
 
         {preview && (
           <div className="mt-4">
-            <p className="text-sm text-gray-500 mb-2">Preview:</p>
-            <div className="w-full h-48 rounded bg-gray-100 flex items-center justify-center overflow-hidden">
-              <img src={preview} alt="Upload preview" className="max-h-full object-contain" />
+            <p className="text-sm font-bold text-gray-700 mb-2">Image Masking (Optional):</p>
+            <p className="text-xs text-gray-500 mb-2">Click and drag over sensitive areas (like license plates or brand logos) to hide them from players.</p>
+            <div 
+              ref={containerRef}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleMouseDown}
+              onTouchMove={handleMouseMove}
+              onTouchEnd={handleMouseUp}
+              className="relative w-full rounded border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden cursor-crosshair select-none"
+              style={{ touchAction: 'none' }}
+            >
+              <img src={preview} alt="Upload preview" className="w-full h-auto block pointer-events-none" />
+              
+              {masks.map((m, i) => (
+                <div 
+                  key={i} 
+                  className="absolute bg-gray-900 border-2 border-white/50"
+                  style={{ left: `${m.x}%`, top: `${m.y}%`, width: `${m.w}%`, height: `${m.h}%` }}
+                />
+              ))}
+              
+              {currentBox && (
+                <div 
+                  className="absolute bg-black/50 border-2 border-dashed border-red-500"
+                  style={{ left: `${currentBox.x}%`, top: `${currentBox.y}%`, width: `${currentBox.w}%`, height: `${currentBox.h}%` }}
+                />
+              )}
             </div>
+            {masks.length > 0 && (
+              <button type="button" onClick={() => setMasks([])} className="text-sm text-rose-600 font-medium hover:text-rose-700 mt-3 inline-block">
+                ⟲ Clear all masks ({masks.length})
+              </button>
+            )}
           </div>
         )}
 
         <button 
           type="submit"
           disabled={isUploading}
-          className="w-full mt-6 bg-blue-600 text-white font-bold py-3 px-4 rounded hover:bg-blue-700 transition duration-200 disabled:bg-gray-400"
+          className="w-full mt-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 px-4 rounded-xl shadow-lg hover:shadow-indigo-500/30 transition duration-200 disabled:opacity-70 text-lg flex justify-center"
         >
-          {isUploading ? 'Uploading...' : 'Save Image Securely'}
+          {isUploading ? 'Uploading...' : 'Save & Upload'}
         </button>
       </form>
     </div>

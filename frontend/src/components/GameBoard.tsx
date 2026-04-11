@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fetchNextImage, submitGuess } from '../services/api';
+import { fetchNextImage, submitGuess, ImageObject, recordObjectStat } from '../services/api';
 import ScoreBoard from './ScoreBoard';
 import ImageDisplay from './ImageDisplay';
 import GuessInput from './GuessInput';
@@ -12,13 +12,14 @@ interface GameBoardProps {
 }
 
 export default function GameBoard({ category, difficulty = 'Medium', rounds = 5, onGameEnd }: GameBoardProps) {
-  const [image, setImage] = useState<{ imageUrl: string; answer: string } | null>(null);
-  const [nextImageCache, setNextImageCache] = useState<{ imageUrl: string; answer: string } | null>(null);
+  const [image, setImage] = useState<ImageObject | null>(null);
+  const [nextImageCache, setNextImageCache] = useState<ImageObject | null>(null);
   const [score, setScore] = useState(0);
   const [round, setRound] = useState(0);
   const [isGuessing, setIsGuessing] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [attempts, setAttempts] = useState(0);
 
   const fetchAndPreload = async () => {
     const data = await fetchNextImage(category, difficulty);
@@ -51,6 +52,7 @@ export default function GameBoard({ category, difficulty = 'Medium', rounds = 5,
     setImage(nextImageCache);
     setIsGuessing(true);
     setFeedback(null);
+    setAttempts(0);
     const newRound = round + 1;
     setRound(newRound);
     
@@ -61,6 +63,9 @@ export default function GameBoard({ category, difficulty = 'Medium', rounds = 5,
   };
 
   const skipImage = () => {
+    if (image?.id) {
+      recordObjectStat(image.id, 'stat_skip').catch(console.error);
+    }
     advanceRound(score);
   };
 
@@ -68,14 +73,26 @@ export default function GameBoard({ category, difficulty = 'Medium', rounds = 5,
     if (!image) return;
     const result = await submitGuess(guess, image.answer);
     const newScore = result.correct ? score + 1 : score;
+    const currentAttempt = attempts + 1;
+    setAttempts(currentAttempt);
     
     if (result.correct) {
       setScore(newScore);
       setFeedback('Correct!');
       setIsGuessing(false);
+      
+      if (image.id) {
+        if (currentAttempt === 1) recordObjectStat(image.id, 'stat_1st_try').catch(console.error);
+        else if (currentAttempt === 2) recordObjectStat(image.id, 'stat_2nd_try').catch(console.error);
+        else recordObjectStat(image.id, 'stat_3rd_try').catch(console.error);
+      }
+      
       setTimeout(() => advanceRound(newScore), 1500); 
     } else {
       setFeedback('Incorrect, try again! Or skip.');
+      if (image.id) {
+        recordObjectStat(image.id, 'stat_wrong').catch(console.error);
+      }
     }
   };
 
@@ -89,7 +106,12 @@ export default function GameBoard({ category, difficulty = 'Medium', rounds = 5,
       </div>
 
       <div className={`transition-transform duration-500 ease-out ${!isGuessing ? 'scale-105' : 'scale-100'}`}>
-        <ImageDisplay imageUrl={image.imageUrl} difficulty={difficulty} />
+        <ImageDisplay 
+          imageUrl={image.imageUrl} 
+          difficulty={difficulty} 
+          masks={image.specific_areas} 
+          isRevealed={!isGuessing} 
+        />
       </div>
       
       {feedback && (

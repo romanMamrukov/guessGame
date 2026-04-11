@@ -5,9 +5,10 @@ interface MenuProps {
   onStartGame: (category: string, difficulty: string, rounds: number) => void;
   onNavigateUpload: () => void;
   onNavigateLeaderboard: () => void;
+  onNavigateStats: () => void;
 }
 
-export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderboard }: MenuProps) {
+export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderboard, onNavigateStats }: MenuProps) {
   const [categories, setCategories] = useState<string[]>([]);
   const [difficulties, setDifficulties] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -83,19 +84,26 @@ export default function Menu({ onStartGame, onNavigateUpload, onNavigateLeaderbo
           Play Now
         </button>
 
-        <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100">
+        <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-gray-100">
           <button 
             onClick={onNavigateUpload}
-            className="py-3 bg-gray-50 text-gray-700 font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-gray-100 border border-gray-200 transition duration-200"
+            className="py-3 bg-gray-50 text-gray-700 font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-gray-100 border border-gray-200 transition duration-200 text-sm"
           >
             Upload
           </button>
           
           <button 
             onClick={onNavigateLeaderboard}
-            className="py-3 bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-indigo-100 border border-indigo-100 transition duration-200"
+            className="py-3 bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-indigo-100 border border-indigo-100 transition duration-200 text-sm"
           >
             Rankings
+          </button>
+
+          <button 
+            onClick={onNavigateStats}
+            className="py-3 bg-emerald-50 text-emerald-700 font-bold flex items-center justify-center gap-2 rounded-xl hover:bg-emerald-100 border border-emerald-100 transition duration-200 text-sm"
+          >
+            My Stats
           </button>
         </div>
       </div>

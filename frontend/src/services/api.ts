@@ -75,3 +75,26 @@ export async function uploadObject(formData: FormData) {
   }
   return res.json();
 }
+
+export async function pingServer() {
+  try {
+    await fetch(`${API_BASE}/health`);
+  } catch (err) {
+    // ignore
+  }
+}
+
+export async function recordObjectStat(id: number | string, statType: 'stat_1st_try' | 'stat_2nd_try' | 'stat_3rd_try' | 'stat_wrong' | 'stat_skip') {
+  const res = await fetch(`${API_BASE}/objects/${id}/stats`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ statType })
+  });
+  return res.json();
+}
+
+export async function fetchUserUploads(username: string) {
+  const res = await fetch(`${API_BASE}/users/${encodeURIComponent(username)}/uploads`);
+  if (!res.ok) throw new Error('Failed to fetch user uploads');
+  return res.json();
+}

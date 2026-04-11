@@ -147,6 +147,7 @@ app.get("/api/images", async (req: Request, res: Response): Promise<any> => {
     }
 
     return res.json({ 
+      id: randomObject.id,
       imageUrl: imageUrl, 
       category: randomObject.category, 
       answer: randomObject.name,
@@ -171,7 +172,7 @@ app.post("/api/objects", upload.single("image"), async (req: express.Request, re
   const file = req.file;
   if (!file) return res.status(400).json({ error: "Image file required" });
 
-  const { name, category, difficulty, info, specific_areas } = req.body;
+  const { name, category, difficulty, info, specific_areas, uploader } = req.body;
   
   if (!name || !category || !difficulty) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -242,7 +243,8 @@ app.post("/api/objects", upload.single("image"), async (req: express.Request, re
       category,
       difficulty,
       info: info || null,
-      specific_areas: specific_areas || null
+      specific_areas: specific_areas || null,
+      uploader: uploader || null
     }])
     .select()
     .single();
@@ -251,7 +253,50 @@ app.post("/api/objects", upload.single("image"), async (req: express.Request, re
   return res.json({ id: data.id, name, imagePath, category });
 });
 
-const PORT = 3000;
+// Update Object Stats
+app.post("/api/objects/:id/stats", async (req: Request, res: Response): Promise<any> => {
+  const { id } = req.params;
+  const { statType } = req.body; // 'stat_1st_try', 'stat_2nd_try', 'stat_3rd_try', 'stat_wrong', 'stat_skip'
+
+  const validStats = ['stat_1st_try', 'stat_2nd_try', 'stat_3rd_try', 'stat_wrong', 'stat_skip'];
+  if (!validStats.includes(statType)) {
+    return res.status(400).json({ error: "Invalid stat type" });
+  }
+
+  // Get current stat value
+  const { data: objectDetails } = await supabase.from('objects').select(statType).eq('id', id).single();
+  
+  if (!objectDetails) return res.status(404).json({ error: "Object not found" });
+
+  const currentVal = objectDetails[statType] || 0;
+
+  // Increment
+  const updateData = { [statType]: currentVal + 1 };
+  const { data: updatedObj, error } = await supabase
+    .from('objects')
+    .update(updateData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(updatedObj);
+});
+
+// Get User Uploads Stats
+app.get("/api/users/:username/uploads", async (req: Request, res: Response): Promise<any> => {
+  const { username } = req.params;
+  const { data, error } = await supabase
+    .from('objects')
+    .select('*')
+    .eq('uploader', username)
+    .order('created_at', { ascending: false });
+    
+  if (error) return res.status(500).json({ error: error.message });
+  return res.json(data);
+});
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });

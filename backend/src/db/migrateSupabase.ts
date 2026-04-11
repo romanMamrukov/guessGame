@@ -30,8 +30,25 @@ CREATE TABLE objects (
   difficulty TEXT,
   info TEXT,
   specific_areas TEXT,
+  uploader TEXT,
+  stat_1st_try INTEGER DEFAULT 0,
+  stat_2nd_try INTEGER DEFAULT 0,
+  stat_3rd_try INTEGER DEFAULT 0,
+  stat_wrong INTEGER DEFAULT 0,
+  stat_skip INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
+
+-- Note: If you already have the objects table, run these ALTER statements instead:
+/*
+ALTER TABLE objects 
+  ADD COLUMN IF NOT EXISTS uploader TEXT,
+  ADD COLUMN IF NOT EXISTS stat_1st_try INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stat_2nd_try INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stat_3rd_try INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stat_wrong INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stat_skip INTEGER DEFAULT 0;
+*/
 
 -- Insert initial seeder data
 INSERT INTO objects (name, imagePath, category, difficulty, info) 
