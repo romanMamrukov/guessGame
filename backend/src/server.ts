@@ -268,7 +268,7 @@ app.post("/api/objects/:id/stats", async (req: Request, res: Response): Promise<
   
   if (!objectDetails) return res.status(404).json({ error: "Object not found" });
 
-  const currentVal = objectDetails[statType] || 0;
+  const currentVal = Number(objectDetails[statType]) || 0;
 
   // Increment
   const updateData = { [statType]: currentVal + 1 };
@@ -296,7 +296,7 @@ app.get("/api/users/:username/uploads", async (req: Request, res: Response): Pro
   return res.json(data);
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
