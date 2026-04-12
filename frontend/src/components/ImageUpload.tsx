@@ -226,9 +226,14 @@ export default function ImageUpload({ onSuccess, onCancel }: ImageUploadProps) {
               )}
             </div>
             {masks.length > 0 && (
-              <button type="button" onClick={() => setMasks([])} className="text-sm text-rose-600 font-medium hover:text-rose-700 mt-3 inline-block">
-                ⟲ Clear all masks ({masks.length})
-              </button>
+              <div className="mt-3 flex items-center gap-6">
+                <button type="button" onClick={() => setMasks(masks.slice(0, -1))} className="text-sm text-indigo-600 font-bold hover:text-indigo-800 transition">
+                  ↩ Undo Last Mark
+                </button>
+                <button type="button" onClick={() => setMasks([])} className="text-sm text-rose-500 font-medium hover:text-rose-700 transition">
+                  ⟲ Clear All ({masks.length})
+                </button>
+              </div>
             )}
           </div>
         )}

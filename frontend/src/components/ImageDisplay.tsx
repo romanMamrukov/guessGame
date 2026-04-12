@@ -7,11 +7,11 @@ interface ImageDisplayProps {
   isRevealed?: boolean;
 }
 
-export default function ImageDisplay({ imageUrl, difficulty, masks = [], isRevealed = false }: ImageDisplayProps) {
+export default function ImageDisplay({ imageUrl, masks = [], isRevealed = false }: ImageDisplayProps) {
   const [position, setPosition] = useState({ x: 50, y: 50 });
 
-  // scale 1 means seeing the full image (revealed state)
-  const scale = isRevealed ? 1 : (difficulty === 'Easy' ? 2 : difficulty === 'Medium' ? 4 : difficulty === 'Hard' ? 8 : 3);
+  // We now always show the full image, instead of zooming in based on difficulty.
+  const scale = 1;
 
   useEffect(() => {
     // Randomize the background position each time the image changes
@@ -33,7 +33,7 @@ export default function ImageDisplay({ imageUrl, difficulty, masks = [], isRevea
       >
         <div className="relative w-full">
            <img src={imageUrl} alt="Guess object" className="w-full h-auto block pointer-events-none" />
-           {masks && masks.length > 0 && masks.map((m, i) => (
+           {!isRevealed && masks && masks.length > 0 && masks.map((m, i) => (
               <div 
                 key={i} 
                 className="absolute bg-gray-900 border border-white/30"

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { fetchNextImage, submitGuess, ImageObject, recordObjectStat } from '../services/api';
+import { fetchNextImage, submitGuess, recordObjectStat } from '../services/api';
+import type { ImageObject } from '../services/api';
 import ScoreBoard from './ScoreBoard';
 import ImageDisplay from './ImageDisplay';
 import GuessInput from './GuessInput';
